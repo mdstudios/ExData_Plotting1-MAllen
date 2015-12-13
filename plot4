@@ -1,0 +1,48 @@
+#supporting packages
+library(data.table)
+library(lubridate)
+
+#rep function - 2 character strings and 7 numerics columns
+variable.class<-c(rep('character',2),rep('numeric',7))
+
+#read data
+poweruse<-read.table('SourceData.txt', sep=";", header=TRUE, na.strings='?', colClasses=variable.class)
+
+#filter data to specific date
+poweruse<-poweruse[poweruse$Date=='1/2/2007' | poweruse$Date=='2/2/2007',]
+
+# clean up the variable names 
+cols<-c('Date','Time','GlobalActivePower','GlobalReactivePower','Voltage','GlobalIntensity','SubMetering1','SubMetering2','SubMetering3')
+colnames(poweruse)<-cols
+
+#convert date/time fields
+poweruse$DateTime<-dmy(poweruse$Date)+hms(poweruse$Time)
+poweruse<-poweruse[,c(10,3:9)]
+
+#write data
+write.table(poweruse,file='source consumption.txt',sep=';',row.names=FALSE)
+
+#png file device setup
+png(filename='plot4.png', width=480, height=480, units='px')
+
+#make multiple plots for this charte
+par(mfrow=c(2,2))
+
+#top left
+plot(poweruse$DateTime,poweruse$GlobalActivePower,ylab='Global Active Power',xlab='',type='l')
+
+#top right
+plot(poweruse$DateTime,poweruse$Voltage,xlab='datetime',ylab='Voltage',type='l')
+
+#bottom left  
+linecolor<-c('black','red','blue')
+lbls<-c('Sub_metering_1','Sub_metering_2','Sub_metering_3')
+plot(poweruse$DateTime, poweruse$SubMetering1, type='l', xlab='', ylab='Energy sub metering', col=linecolor[1])
+lines(poweruse$DateTime, poweruse$SubMetering2, col=linecolor[2])
+lines(poweruse$DateTime, poweruse$SubMetering3, col=linecolor[3])
+
+#bottom right 
+plot(poweruse$DateTime, poweruse$GlobalReactivePower, type='l', ylab='Global_reactive_power' ,xlab='datetime')
+
+#turn off device
+dev.off()

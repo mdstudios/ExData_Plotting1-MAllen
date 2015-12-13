@@ -1,0 +1,32 @@
+#supporting packages
+library(data.table)
+library(lubridate)
+
+#rep function - 2 character strings and 7 numerics columns
+variable.class<-c(rep('character',2),rep('numeric',7))
+
+#read data
+poweruse<-read.table('SourceData.txt', sep=";", header=TRUE, na.strings='?', colClasses=variable.class)
+
+#filter data to specific date
+poweruse<-poweruse[poweruse$Date=='1/2/2007' | poweruse$Date=='2/2/2007',]
+
+# clean up the variable names 
+cols<-c('Date','Time','GlobalActivePower','GlobalReactivePower','Voltage','GlobalIntensity','SubMetering1','SubMetering2','SubMetering3')
+colnames(poweruse)<-cols
+
+#convert date/time fields
+poweruse$DateTime<-dmy(poweruse$Date)+hms(poweruse$Time)
+poweruse<-poweruse[,c(10,3:9)]
+
+#write data
+write.table(poweruse,file='source consumption.txt',sep=';',row.names=FALSE)
+
+#png file device setup
+png(filename='plot2.png', width=480, height=480, units='px')
+
+#plot diagram for plot2
+plot(poweruse$DateTime,poweruse$GlobalActivePower, ylab="Global Active Power(Kilowatts)", xlab="", type='l')
+
+#turn off device
+dev.off()
